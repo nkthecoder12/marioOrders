@@ -18,9 +18,11 @@ authRouter.post("/login", (req, res) => {
     return;
   }
   const session = createSession(user.id);
+  const isHttps = req.secure || req.headers["x-forwarded-proto"] === "https";
   res.cookie(COOKIE, session.id, {
     httpOnly: true,
-    sameSite: "lax",
+    sameSite: isHttps ? "none" : "lax",
+    secure: Boolean(isHttps),
     path: "/",
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
@@ -28,8 +30,13 @@ authRouter.post("/login", (req, res) => {
 });
 
 authRouter.post("/logout", (req, res) => {
+  const isHttps = req.secure || req.headers["x-forwarded-proto"] === "https";
   destroySession(readSessionId(req));
-  res.clearCookie(COOKIE, { path: "/" });
+  res.clearCookie(COOKIE, {
+    path: "/",
+    sameSite: isHttps ? "none" : "lax",
+    secure: Boolean(isHttps),
+  });
   res.json({ ok: true });
 });
 
