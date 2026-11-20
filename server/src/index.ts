@@ -1,5 +1,8 @@
 import cookieParser from "cookie-parser";
 import express from "express";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { lanIPv4 } from "./lan.js";
 import { attachUser } from "./middleware/auth.js";
 import { adminRouter } from "./routes/admin.js";
@@ -10,6 +13,9 @@ import { ordersRouter, paymentsRouter } from "./routes/orders.js";
 import { seed } from "./seed.js";
 
 seed();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = Number(process.env.PORT ?? 3001);
@@ -28,6 +34,21 @@ app.use("/api/orders", ordersRouter);
 app.use("/api/payments", paymentsRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/events", eventsRouter);
+
+// Serve frontend in production if built
+const clientDist = [
+  path.resolve(__dirname, "../../client/dist"),
+  path.resolve(process.cwd(), "client/dist"),
+  path.resolve(process.cwd(), "../client/dist"),
+].find((p) => fs.existsSync(p));
+
+if (clientDist) {
+  app.use(express.static(clientDist));
+  app.get("*", (req, res, next) => {
+    if (req.path.startsWith("/api")) return next();
+    res.sendFile(path.join(clientDist, "index.html"));
+  });
+}
 
 app.use((req, res) => {
   res.status(404).json({ error: `No route ${req.method} ${req.path}` });
