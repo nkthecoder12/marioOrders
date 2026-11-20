@@ -29,6 +29,10 @@ New-NetFirewallRule -DisplayName "Mario Juice Vite" -Direction Inbound -Protocol
 
 Port 3001 is only needed on the machine running the demo (the browser talks to Vite, which proxies `/api`).
 
+## Vercel + Render deployment
+
+The root `vercel.json` forwards `/api/*` requests to the Render backend at `marioorders-1.onrender.com`. Keep the Vercel project root at the repository root so this rewrite is applied. If the Render service URL changes, update the rewrite destination.
+
 ## Logins (no signup)
 
 | Role     | Email             | Password |
